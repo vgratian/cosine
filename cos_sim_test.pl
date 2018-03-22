@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 use strict;
-use 5.010;
 use Time::HiRes;
 use lib '.'; #Redundant if @IRC includes current dir
 use cos_sim;
