@@ -14,7 +14,7 @@ for i in range(size):
 
 print('Calculating cosine similarity between vectors')
 start = time()
-similarity = Cos_Sim(vector0, vector1).similarity
+similarity = Cos_Sim(vector0, vector1).simil
 end = time()
 print('Done. Runtime: {} s. Similarity: {}.'.format(
     round(end-start, 3), round(similarity, 5)))

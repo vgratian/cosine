@@ -25,11 +25,7 @@ class Cos_Sim:
 
         # Calculate cosine similarity between vectors
         self.dot_prod = self.get_dot_prod()
-        if self.dot_prod == 0:
-            self.similarity = 0
-        else:
-            self.eucl_magn = self.get_eucl_magn()
-            self.similarity = self.dot_prod / self.eucl_magn
+        self.simil = self.dot_prod / self.get_eucl_magn() if self.dot_prod else 0
 
     def get_dot_prod(self):
         """
