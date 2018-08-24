@@ -7,7 +7,7 @@
 
 int main() {
 
-    int size = 1000000;
+    int size = 10000;
     float vector0[size];
     float vector1[size];
 
@@ -19,13 +19,16 @@ int main() {
         vector1[i] = rand() % 10 + -10;
     }
 
-    std::cout << "Calculating cosine similarity between vectors" << std::endl;
+    std::cout << "Calculating Cosine Similarity. Repeating 100x." << std::endl;
     clock_t begin = clock();
 
-    Cos_Sim sim (vector0, vector1, size);
+    for(int i=0; i<100; i++) {
+      Cos_Sim sim (vector0, vector1, size);
+    }
+
     clock_t end = clock();
 
     std::cout << "Done. Runtime: " << double(end-begin)/CLOCKS_PER_SEC
-        << " s. Similarity: " << sim.value << std::endl;
+        << " s." << std::endl;
     return 0;
 }

@@ -35,6 +35,7 @@ means they are opposite of each other.
 
 # Computational Performance
 
+For testing I generate 2 vectors of size 10,000 and calculate CS 100 times.
 On my Dell XPS computer with 8G memory and 4 core i5 processor and running on
 Arch Linux, I got the following runtimes :
 
@@ -42,19 +43,20 @@ Arch Linux, I got the following runtimes :
 __Python__:
 ```
 $ python cos_sim_test.py
-Runtime: 0.963 s
+Runtime: 0.934 s
 ```
 
 __Perl__:
 ```
 $ perl cos_sim_test.pl
-Runtime: 0.377 s
+Runtime: 0.339 s
 ```
 
 __C++__:
 ```
-$ make cos_sim_test && ./cos_sim_test
-Runtime: 0.029 s.
+$ make cos_sim_test
+$ ./cos_sim_test
+Runtime: 0.036 s.
 
 ```
 
