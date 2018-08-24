@@ -33,7 +33,7 @@ Output is a number between -1 and 1, where 1 means the two vectors are
 completely similar (or identical), 0 means they have no similarity at all and -1
 means they are opposite of each other.
 
-# Computational Performance
+## Running test & Computational Performance
 
 For testing I generate 2 vectors of size 10,000 and calculate CS 100 times.
 On my Dell XPS computer with 8G memory and 4 core i5 processor and running on
@@ -59,6 +59,22 @@ $ ./cos_sim_test
 Runtime: 0.036 s.
 
 ```
+
+# Python optimization
+
+Python can run a bit faster with list comprehensions (~0.865 s). However for the sake of readability (which is the sole purpose here) I leave it as it is. But if we would choose for it, the method `get_dot_prod` would become:
+
+```
+return sum([a*b for a,b in zip(self.vec0,self.vec1)])
+```
+
+
+and the method `get_eucl_magn`:
+```
+return sqrt(sum([pow(x,2) for x in self.vec0])) * sqrt(sum([pow(x,2) for x in self.vec1]))
+```
+
+There must be other ways to improve Python performance. I tried using `map` with `lambda`, arrays instead of lists, simple function instead of class, and all made the runtime even worse. Any ideas how to optimize Python?
 
 # License
 
