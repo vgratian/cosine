@@ -17,13 +17,15 @@ public:
 };
 
 Cos_Sim::Cos_Sim(float *vect0, float *vect1, int size) {
-    // Calculate dot product
-    get_dot_prod(vect0, vect1, size);
-    // If dot product is 0 skip calculation
-    if (dot_prod == 0)
+    // Vectors size can't be 0
+    if (size == 0) { throw std::logic_error("Vector size can not be 0."); }
+    // Calculate eucledian distance
+    get_eucl_magn(vect0, vect1, size);
+    // If eucledian distance is 0 skip calculation
+    if (eucl_magn == 0)
         value = 0;
     else {
-        get_eucl_magn(vect0, vect1, size);
+        get_dot_prod(vect0, vect1, size);
         value = dot_prod / eucl_magn;
     }
 }
@@ -41,5 +43,5 @@ void Cos_Sim::get_eucl_magn(float *vect0, float *vect1, int size) {
         eucl_len0 += pow(vect0[i], 2);
         eucl_len1 += pow(vect1[i], 2);
     }
-    eucl_magn = sqrt(eucl_len0) * sqrt(eucl_len1);
+    eucl_magn = sqrt(eucl_len0 * eucl_len1);
 }
