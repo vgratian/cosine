@@ -1,5 +1,6 @@
 
 from math import sqrt
+import numpy
 
 class Cos_Sim:
     """
@@ -16,7 +17,7 @@ class Cos_Sim:
     def __init__(self, vec0, vec1):
 
         # Make sure vectors are of equal size
-        if len(vec0) > len(vec1):
+        if len(vec0) != len(vec1):
             raise ValueError('Vectors are not of equal size.')
 
         # Initialize the two vectors
@@ -24,8 +25,9 @@ class Cos_Sim:
         self.vec1 = vec1
 
         # Calculate cosine similarity between vectors
-        self.dot_prod = self.get_dot_prod()
-        self.simil = self.dot_prod / self.get_eucl_magn() if self.dot_prod else 0
+        dot_prod = self.get_dot_prod()
+        eucl_magn = self.get_eucl_magn()
+        self.simil = dot_prod / eucl_magn if eucl_magn else None
 
     def get_dot_prod(self):
         """
@@ -39,15 +41,17 @@ class Cos_Sim:
             dot_prod += a * b
         return dot_prod
 
+
     def get_eucl_magn(self):
         """
         Eucledian magnitude is the product of the lengths of the two vectors.
         We use this value to normalize the dot product of the vectors and
         neutralize the effect of vector lengths on the final similarity score.
         """
+
         eucl_len0 = 0
         eucl_len1 = 0
         for a, b in zip(self.vec0, self.vec1):
             eucl_len0 += pow(a, 2)
             eucl_len1 += pow(b, 2)
-        return sqrt(eucl_len0) * sqrt(eucl_len1)
+        return sqrt(eucl_len0 * eucl_len1)
