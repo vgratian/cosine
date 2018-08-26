@@ -11,18 +11,7 @@ sub get_cos_sim {
     if (scalar @vector0 != scalar @vector1) {
         die "Vectors are not of equal size. Error";
     }
-
-    # Calculate dot product
     my $size = scalar @vector0;
-    my $dot_prod = 0;
-    foreach(0..$size) {
-        $dot_prod += $vector0[$_] * $vector1[$_];
-    }
-
-    # If dot product is 0, stop calculation
-    if ($dot_prod == 0) {
-        return $dot_prod;
-    }
 
     # Calculate eucledian magnitude
     my $eucl_len0 = 0;
@@ -31,7 +20,18 @@ sub get_cos_sim {
         $eucl_len0 += $vector0[$_]**2;
         $eucl_len1 += $vector1[$_]**2;
     }
-    my $eucl_magn = sqrt($eucl_len0) * sqrt($eucl_len1);
+    my $eucl_magn = sqrt($eucl_len0 * $eucl_len1);
+
+    # If 0, stop calculation
+    if ($eucl_magn == 0) {
+        return undef;
+    }
+
+    # Calculate dot product
+    my $dot_prod = 0;
+    foreach(0..$size) {
+        $dot_prod += $vector0[$_] * $vector1[$_];
+    }
 
     # Return cosine similarity
     return $dot_prod / $eucl_magn;
