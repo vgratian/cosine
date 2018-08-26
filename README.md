@@ -15,13 +15,11 @@ Using only standard libraries, Python is the slowest of all three, but using Num
 This measure is widely used in document classification and information retrieval where documents are treated as vectors. For example we would like to
 find the document that has the highest similarity to the search query. We can get vectors by calculating a score for each word in the dataset (frequency or TF-IDF). With cosine similarity we are then able to measure the similarity between each pair of vectors.
 
-This similarity is calculated by measuring the distance between two vectors and normilzing that by the length of the vectors (so the length of the documents don't play a role: a short document can be very similar to a long one and vice versa). The value is `1` when two vectors are identical, `0` when they have no similarity and `-1` when they are opposites of each other.
+This similarity is calculated by measuring the distance between two vectors and normalizing that by the length of the vectors (so the length of the documents don't play a role: a short document can be very similar to a long one and vice versa).
 
 # Usage
 ### Input
-Expected input is two vectors of equal length that represent two documents.
-These vectors are typically TF-IDF scores, but you can also use word frequencies
-or counts.
+Expected input is two vectors of equal length.
 
 In the test files, we just randomly generate two vectors, therefore the
 "similarity" between them is also random.
@@ -30,7 +28,7 @@ In the test files, we just randomly generate two vectors, therefore the
 
 Output is a number between -1 and 1, where 1 means the two vectors are
 completely similar (or identical), 0 means they have no similarity at all and -1
-means they are opposite of each other.
+means they are opposites of each other.
 
 # Computational performance
 
@@ -78,7 +76,7 @@ return sum([a*b for a,b in zip(self.vec0,self.vec1)])
 
 and:
 ```python
-return sqrt(sum([pow(x,2) for x in self.vec0])) * sqrt(sum([pow(x,2) for x in self.vec1]))
+return sqrt(sum([pow(x,2) for x in self.vec0]) * sum([pow(x,2) for x in self.vec1]))
 ```
 
 There must be other ways to improve Python performance. I tried using `map` with `lambda`, arrays instead of lists, simple function instead of class, and all made the runtime even worse.
