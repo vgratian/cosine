@@ -5,10 +5,9 @@
 
 Cosine Similarity is a measure of similarity between two vectors. This package
 is a simple library in three languages: __Python__, __C++__ and __Perl__. This
-is only intended for educational purposes and for your large projects I recommend
-to use higher performance libraries.
+is intended for educational purposes and I focus here on optimizing python.
 
-Using only standard libraries, Python is the slowest of all three, but using NumPy arrays, Python is the fastest.
+I recommend here two python packaged: `cos_sim.py` when performance is not a priority, but readability and `cos_sim_np.py` when high performance is your priority. The average runtime difference between the two is about 1:250.
 
 
 ### About Cosine Similarity
@@ -32,53 +31,60 @@ means they are opposites of each other.
 
 # Computational performance
 
-For testing I generate 2 vectors of size 10,000 and calculate cosine similarity 100 times. (Since vectors are random ints between -10 and 10 the runtime is slightly different for each experiment). The following test were done on a 8GB/i5 machine.
+For testing 2 vectors of size 50,000 are generated which point at opposite directions (so the calculated cosine similarity should be -1). We calculate cosine similarity, repeat this 50 times in total and calculate average runtime. The following test were done on a 8GB/i5 machine.
 
-Note that although Python is the slowest in the race, its time costs can be reduced drastically by using NumPy arrays instead of built-in lists.
+Note that although Python is the slowest initially, it beats C++ and Perl when we use numpy arrays instead of built-in lists. (Also note that my knowledge of C++ is very superficial, I'm sure there are ways make it run much faster.)
 
 
 __C++__:
 ```
 $ make cos_sim_test && ./cos_sim_test
-Runtime: 0.034 s.
+Done. Average runtime: 0.00284s. Similarity: -1.
 ```
 
 __Perl__:
 ```
 $ perl cos_sim_test.pl
-Runtime: 0.358 s
+Done. Average runtime : 0.0306 s. Similarity: -1.
 ```
 
 __Python__:
 ```
 $ python cos_sim_test.py
-Runtime: 0.962 s
+Done. Average runtime: 0.0491 s. Similarity: -1.0.
 ```
-
-__Python__ with NumPy arrays:
-```
-$ python cos_sim_np_test.py
-Runtime: 0.010 s
-```
-
-_Note_: since vectors are initialized with random values, these runtimes are not very precise and have a ~3-4% variation.
 
 # Python optimization
 
-Python can run a bit faster (~0.865 s) if we use list comprehensions instead open `for` loops. For the sake of readability (which is the sole purpose here) I leave the Python script as it, but as mentioned before I don't recommend using it for practical purposes.
+First step to optimize Python is to use list comprehensions instead of `for` loops. See the comments in `get_dot_prod()` and `get_eucl_magn()` in `cos_sim.py` to see how this is done. The difference is however not significant:
 
-If we choose for list comprehensions, we can simple replace the methods `get_dot_prod` and `get_eucl_magn` in the class `Cos_Sim` by the following two lines respectively:
+```
+$ python cos_sim_test.py
+Done. Average runtime: 0.0437 s. Similarity: -1.0.
+```
+(Here I use the lines commented in `cos_sim.py`)
 
-```python
-return sum([a*b for a,b in zip(self.vec0,self.vec1)])
+
+Using only standard/builtin data structures, I tried a few other optimizations (`map` with `lambda` instead of list comprehension), function call instead of object), but none improved the running time. This is strange, I would expect that at leat a function call should be less expensive than creating an object.
+
+Next step was to use external libraries: using numpy's `ndarray` (N dimensional array) instead of Python lists is here the game changer. Running the same test as above is almost 250x faster than the initial Python test and 14x faster than C++:
+
+```
+$ python cos_sim_np_test.py
+Done. Average runtime: 0.0002 s. Similarity: -1.0.
 ```
 
+It could not be better than this, I thought, but I went on with experiments. This time I used two methods from `sklearn` to calculate dot product (`sklearn.utils.extmath.safe_sparse_dot`) and euclidean distances (`sklearn.metrics.pairwise.euclidean_distances`) respectively (and I continued to use numpy arrays to store the vectors). The result significantly slower than the last experiment:
 
-and:
-```python
-return sqrt(sum([pow(x,2) for x in self.vec0]) * sum([pow(x,2) for x in self.vec1]))
+
+```
+$ python cos_sim_sk_test.py
+Done. Average runtime: 0.0025 s. Similarity: -1.0.
 ```
 
-There must be other ways to improve Python performance. I tried using `map` with `lambda`, arrays instead of lists, simple function instead of class, and all made the runtime even worse.
+So what if we delegate the calculation completely to `sklearn`? My last experiment was to use `sklearn.metrics.pairwise.cosine_similarity` as a method (see my comments in `cos_sim_sk_test.py` for how it is done). Slightly better but still 10x slower than simply using numpy arrays _and_ a not-so-accurate result.
 
-Game-changer is when we use _NumPy_'s `ndarray` instead of Python's builtin lists. Running the same test as above, the runtime is __0.010__ beating even C++. See `cos_sim_np.py` and `cos_sim_np_test.py` for how to use numpy.
+```
+$ python cos_sim_np_test.py
+one. Average runtime: 0.0021 s. Similarity: -1.0000000000000024.
+```
