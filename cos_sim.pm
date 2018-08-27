@@ -4,23 +4,23 @@ package cos_sim;
 use Math::Complex;
 
 sub get_cos_sim {
-    my @vector0 = @{$_[0]};
-    my @vector1 = @{$_[1]};
+    my @A = @{$_[0]};
+    my @B = @{$_[1]};
 
     # Make sure vectors are of equal size
-    if (scalar @vector0 != scalar @vector1) {
+    if (scalar @A != scalar @B) {
         die "Vectors are not of equal size. Error";
     }
-    my $size = scalar @vector0;
+    my $size = scalar @A;
 
     # Calculate eucledian magnitude
-    my $eucl_len0 = 0;
-    my $eucl_len1 = 0;
+    my $A_len = 0;
+    my $B_len = 0;
     foreach(0..$size) {
-        $eucl_len0 += $vector0[$_]**2;
-        $eucl_len1 += $vector1[$_]**2;
+        $A_len += $A[$_]**2;
+        $B_len += $B[$_]**2;
     }
-    my $eucl_magn = sqrt($eucl_len0 * $eucl_len1);
+    my $eucl_magn = sqrt($A_len * $B_len);
 
     # If 0, stop calculation
     if ($eucl_magn == 0) {
@@ -30,7 +30,7 @@ sub get_cos_sim {
     # Calculate dot product
     my $dot_prod = 0;
     foreach(0..$size) {
-        $dot_prod += $vector0[$_] * $vector1[$_];
+        $dot_prod += $A[$_] * $B[$_];
     }
 
     # Return cosine similarity

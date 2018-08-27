@@ -5,22 +5,25 @@ use Time::HiRes;
 use lib '.'; #Redundant if @IRC includes current dir
 use cos_sim;
 
-my $size = 10000;
-my (@vect0, @vect1);
-print("Generating 2 vectors of size $size with random values in range -10 to 10.\n");
+my $size = 50000;
+my (@A, @B);
+print("Generating 2 vectors of size $size. Similarity should be: -1.0'.\n");
 
 # Generate random values in vectors
 foreach(0..$size) {
-    $vect0[$_] = int(rand(20)) + -10;
-    $vect1[$_] = int(rand(20)) + -10;
+    $A[$_] = -10;
+    $B[$_] = 10;
 }
 
-my $begin = Time::HiRes::time();
-print("Calculating Cosine Similarity Repeating 100x.\n");
+my $repeat = 50;
+print("Calculating Cosine Similarity. Repeating $repeat x.\n");
+my $avg_runtime = 0;
+my $similarity;
 foreach(0..100) {
-    my $sim = &cos_sim::get_cos_sim(\@vect0, \@vect1);
+  my $begin = Time::HiRes::time();
+  $similarity = &cos_sim::get_cos_sim(\@A, \@B);
+  my $end = Time::HiRes::time();
+  $avg_runtime += ($end-$begin);
 }
-my $end = Time::HiRes::time();
-my $runtime = $end - $begin;
-
-printf("Done. Runtime: %.3f s.\n", $runtime);
+$avg_runtime /= $repeat;
+printf("Done. Runtime: %.4f s. Similarity: %.\n", $avg_runtime, $similarity);
