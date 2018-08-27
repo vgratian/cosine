@@ -3,7 +3,7 @@ from time import clock
 import cos_sim
 
 size = 50000
-print('Generating 2 vectors of size {}. Similarity should be: -1.0'.format(size))
+print('Generating 2 vectors of size {}. Similarity should be: -1.0.'.format(size))
 A = [-10 for x in range(size)]
 B = [10 for x in range(size)]
 

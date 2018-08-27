@@ -26,4 +26,4 @@ foreach(0..100) {
   $avg_runtime += ($end-$begin);
 }
 $avg_runtime /= $repeat;
-printf("Done. Runtime: %.4f s. Similarity: %.\n", $avg_runtime, $similarity);
+printf("Done. Average runtime: %.4f s. Similarity: %0f.\n", $avg_runtime, $similarity);

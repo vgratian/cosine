@@ -4,7 +4,7 @@
 #include <math.h>
 */
 
-class Cos_Sim {
+class Cosine_Similarity {
 private:
     int size;
     float dot_prod;
@@ -13,35 +13,35 @@ private:
     void get_eucl_magn(float*, float*, int);
 public:
     float value;
-    Cos_Sim(float*, float*, int);
+    Cosine_Similarity(float*, float*, int);
 };
 
-Cos_Sim::Cos_Sim(float *vect0, float *vect1, int size) {
+Cosine_Similarity::Cosine_Similarity(float *A, float *B, int size) {
     // Vectors size can't be 0
     if (size == 0) { throw std::logic_error("Vector size can not be 0."); }
     // Calculate eucledian distance
-    get_eucl_magn(vect0, vect1, size);
+    get_eucl_magn(A, B, size);
     // If eucledian distance is 0 skip calculation
     if (eucl_magn == 0)
         value = 0;
     else {
-        get_dot_prod(vect0, vect1, size);
+        get_dot_prod(A, B, size);
         value = dot_prod / eucl_magn;
     }
 }
 
-void Cos_Sim::get_dot_prod(float *vect0, float *vect1, int size) {
+void Cosine_Similarity::get_dot_prod(float *A, float *B, int size) {
     dot_prod = 0.0;
     for(int i=0; i<size; i++)
-        dot_prod += vect0[i] * vect1[i];
+        dot_prod += A[i] * B[i];
 }
 
-void Cos_Sim::get_eucl_magn(float *vect0, float *vect1, int size) {
-    float eucl_len0 = 0;
-    float eucl_len1 = 0;
+void Cosine_Similarity::get_eucl_magn(float *A, float *B, int size) {
+    float A_len = 0;
+    float B_len = 0;
     for(int i=0; i<size; i++) {
-        eucl_len0 += pow(vect0[i], 2);
-        eucl_len1 += pow(vect1[i], 2);
+        A_len += pow(A[i], 2);
+        B_len += pow(B[i], 2);
     }
-    eucl_magn = sqrt(eucl_len0 * eucl_len1);
+    eucl_magn = sqrt(A_len * B_len);
 }
