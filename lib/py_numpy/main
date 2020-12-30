@@ -1,22 +1,36 @@
 #!/usr/bin/env python3
 
-from time import clock
+import sys
+import time
 import numpy as np
 import cos_sim_np
 
-size = 50000
-print('Generating 2 vectors of size {}. Similarity should be: -1.0'.format(size))
-A = np.array([-10 for x in range(size)])
-B = np.array([10 for x in range(size)])
+def main():
+    repeat = int(sys.argv[1])
+    size = int(sys.argv[2])
 
-repeat = 50
-print('Calculating Cosine Similarity. Repeating {}x.'.format(repeat))
-avg_runtime = 0
-similarity = None
-for i in range(repeat):
-    start = clock()
-    similarity = cos_sim_np.get_cosine_similarity(A,B)
-    end = clock()
-    avg_runtime += (end-start)
-avg_runtime = round(avg_runtime / repeat, 4)
-print('Done. Average runtime: {} s. Similarity: {}.'.format(avg_runtime,similarity))
+    with open(sys.argv[3]) as f:
+        vector_a = np.array([float(x) for x in f.readlines()])
+
+    with open(sys.argv[4]) as f:
+        vector_b = np.array([float(x) for x in f.readlines()])
+
+    assert len(vector_a) == len(vector_b), 'vectors are not of equal size'
+
+    avg_runtime = 0
+    similarity = None
+
+    for i in range(repeat):
+        start = time.monotonic()
+        similarity = cos_sim_np.get_cosine_similarity(vector_a, vector_b)
+        end = time.monotonic()
+        avg_runtime += (end - start)
+        #print('{}\t {}'.format(i, (end-start)))
+
+    avg_runtime /= repeat
+    
+    sys.stdout.write('{} {}\n'.format(similarity, avg_runtime))
+
+
+if __name__ == '__main__':
+    main()

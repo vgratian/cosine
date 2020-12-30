@@ -25,9 +25,9 @@ def main():
     similarity = None
 
     for i in range(repeat):
-        start = time.perf_counter()
+        start = time.monotonic()
         similarity = cos_sim.get_cosine_similarity(vector_a, vector_b)
-        end = time.perf_counter()
+        end = time.monotonic()
         avg_runtime += (end-start)
 
     avg_runtime = (avg_runtime / repeat)

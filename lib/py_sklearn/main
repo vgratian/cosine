@@ -1,33 +1,38 @@
 #!/usr/bin/env python3
 
-from random import randint
-from time import clock
+import sys
+import time
 import numpy as np
 import cos_sim_sk
 
-"""
-For using sklearn's method directly, use the following code (with the same
-np arrays as below):
+def main():
+    
+    repeat = int(sys.argv[1])
+    size = int(sys.argv[2])
 
-from sklearn.metrics.pairwise import cosine_similarity
-(...)
-similarity = cosine_similarity(V)[0][-1]
-"""
+    with open(sys.argv[3]) as f:
+        vector_a = np.array([float(x) for x in f.readlines()])
 
-size = 50000
-print('Generating 2 vectors of size {}. Similarity should be: -1.0'.format(size))
-A = np.array([-10 for x in range(size)])
-B = np.array([10 for x in range(size)])
-O = np.array([0 for x in range(size)])
+    with open(sys.argv[4]) as f:
+        vector_b = np.array([float(x) for x in f.readlines()])
 
-repeat = 50
-print('Calculating Cosine Similarity. Repeating {}x.'.format(repeat))
-avg_runtime = 0
-similarity = None
-for i in range(repeat):
-    start = clock()
-    similarity = cos_sim_sk.get_cosine_similarity(A,B,O)
-    end = clock()
-    avg_runtime += (end-start)
-avg_runtime = round(avg_runtime / repeat, 4)
-print('Done. Average runtime: {} s. Similarity: {}.'.format(avg_runtime,similarity))
+    assert len(vector_a) == len(vector_b), 'vectors are not of equal size'
+
+    vector_a = vector_a.reshape(1,-1)
+    vector_b = vector_b.reshape(1,-1)
+
+    avg_runtime = 0
+    similarity = None
+
+    for i in range(repeat):
+        start = time.monotonic()
+        similarity = cos_sim_sk.get_cosine_similarity(vector_a, vector_b)
+        end = time.monotonic()
+        avg_runtime += (end - start)
+
+    avg_runtime /= repeat
+    sys.stdout.write('{} {}\n'.format(similarity, avg_runtime))
+
+
+if __name__ == '__main__':
+    main()
