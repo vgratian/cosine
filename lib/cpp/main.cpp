@@ -1,39 +1,71 @@
 
-#include <iostream>
-#include <math.h>
-#include <stdlib.h>
-#include <ctime>
-#include "cos_sim.cpp"
+#include <time.h>       // for timespec and clock_gettime()
+#include <math.h>       // for sqrt, used in cos_sim.h
+#include <fstream>      // for file read
+#include <string>       // for std::stod, std::string
+#include "cos_sim.h"
 
-int main() {
+#define BILLION  1000000000.0
 
-    int size = 50000;
-    float A[size];
-    float B[size];
 
-    std::cout << "Generating 2 vectors of size " << size <<
-        " Similarity should be: -1.0." << std::endl;
+void vector_from_file(int size, double *vect, char *filename) {
+  int i;
+  std::string line;
+  std::fstream file;
 
-    for(int i=0; i<size; i++) {
-        A[i] = -10.0;
-        B[i] = 10.0;
+  file.open(filename, std::ios::in);
+  if (!file.is_open()) {
+    printf("error reading [%s]\n", filename);
+    perror(NULL);
+    exit(EXIT_FAILURE);
+  }
+
+  i = 0;
+  while (getline(file, line)) {
+    vect[i] = std::stod(line);
+    i++;
+    if (i>size) {
+      break;
     }
+  }
 
-    int repeat = 50;
-    std::cout << "Calculating Cosine Similarity. Repeating " << repeat <<
-      "x." << std::endl;
-    double avg_runtime = 0;
-    float similarity;
+  file.close();
 
-    for(int i=0; i<100; i++) {
-      clock_t start = clock();
-      Cosine_Similarity sim (A, B, size);
+  if (i!=size) {
+    printf("error: size [%d] does not match [%d] lines read from [%s]\n", size, i, filename);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
+int main(int argc, char *argv[]) {
+
+    int size, repeat, i;
+    double *vector_a, *vector_b;
+    double avg_runtime, similarity;
+    struct timespec start, end;
+
+    repeat = std::atoi(argv[1]);
+    size = std::atoi(argv[2]);
+
+    vector_a = (double *) malloc(size * sizeof(*vector_a));
+    vector_b = (double *) malloc(size * sizeof(*vector_a));
+
+    vector_from_file(size, vector_a, argv[3]);
+    vector_from_file(size, vector_b, argv[4]);
+
+    avg_runtime = 0;
+
+    for(i=0; i<repeat; i++) {
+      clock_gettime(CLOCK_REALTIME, &start);
+      Cosine_Similarity sim (vector_a, vector_b, size);
       similarity = sim.value;
-      clock_t end = clock();
-      avg_runtime += double(end-start)/CLOCKS_PER_SEC;
+      clock_gettime(CLOCK_REALTIME, &end);
+      avg_runtime += (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec)/BILLION);
     }
     avg_runtime /= repeat;
 
-    printf("Done. Average runtime: %.4gs. Similarity: %.0g.\n", avg_runtime, similarity);
+    printf("%.20f %.10f\n", similarity, avg_runtime);
+
     return 0;
 }
