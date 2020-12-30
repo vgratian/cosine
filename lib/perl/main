@@ -2,28 +2,49 @@
 
 use strict;
 use Time::HiRes;
-use lib '.'; #Redundant if @IRC includes current dir
+use lib '.'; #Redundant if @INC includes current dir
 use cos_sim;
 
-my $size = 50000;
-my (@A, @B);
-print("Generating 2 vectors of size $size. Similarity should be: -1.0'.\n");
 
-# Generate random values in vectors
-foreach(0..$size) {
-    $A[$_] = -10;
-    $B[$_] = 10;
+sub vector_from_file
+{
+  my ($size, $filename) = @_;
+  my ($i, @vector);
+  my @vector;
+
+  open(FH, '<', $filename) or die $!;
+
+  $i = 0;
+  while(<FH>) {
+    push(@vector, $_);
+    $i+=1;
+  }
+
+  close(FH);
+
+  unless($i==$size) { die "mismatch size=$size] and file [$filename]=$i"; }
+
+  return @vector;
 }
 
-my $repeat = 50;
-print("Calculating Cosine Similarity. Repeating $repeat x.\n");
+
+my $repeat = $ARGV[0];
+my $size = $ARGV[1];
+my (@vector_a, @vector_b);
+
+@vector_a = vector_from_file($size, $ARGV[2]);
+@vector_b = vector_from_file($size, $ARGV[3]);
+
+unless (scalar @vector_a == scalar @vector_b) { die "vectors not of equal size"; }
+
 my $avg_runtime = 0;
 my $similarity;
-foreach(0..100) {
+
+foreach(0..$repeat-1) {
   my $begin = Time::HiRes::time();
-  $similarity = &cos_sim::get_cos_sim(\@A, \@B);
+  $similarity = cos_sim::get_cos_sim($size, \@vector_a, \@vector_b);
   my $end = Time::HiRes::time();
   $avg_runtime += ($end-$begin);
 }
 $avg_runtime /= $repeat;
-printf("Done. Average runtime: %.4f s. Similarity: %0f.\n", $avg_runtime, $similarity);
+printf "%.20f %.10f\n", $similarity, $avg_runtime;
