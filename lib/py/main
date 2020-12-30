@@ -1,21 +1,38 @@
 #!/usr/bin/env python3
 
-from time import clock
+import sys
+import os
+import time
+
+# little hack to ensure that when symlink
+# is executed, we import the right cos_sim
+if os.getcwd() not in sys.path:
+    sys.path.insert(0, os.getcwd())
 import cos_sim
 
-size = 50000
-print('Generating 2 vectors of size {}. Similarity should be: -1.0.'.format(size))
-A = [-10 for x in range(size)]
-B = [10 for x in range(size)]
 
-repeat = 50
-print('Calculating Cosine Similarity. Repeating {}x.'.format(repeat))
-avg_runtime = 0
-similarity = None
-for i in range(repeat):
-    start = clock()
-    similarity = cos_sim.get_cosine_similarity(A,B)
-    end = clock()
-    avg_runtime += (end-start)
-avg_runtime = round(avg_runtime / repeat, 4)
-print('Done. Average runtime: {} s. Similarity: {}.'.format(avg_runtime,similarity))
+def main():
+    repeat = int(sys.argv[1])
+    size = int(sys.argv[2])
+
+    with open(sys.argv[3]) as f:
+        vector_a = [float(x) for x in f.readlines()]
+
+    with open(sys.argv[4]) as f:
+        vector_b = [float(x) for x in f.readlines()]
+
+    avg_runtime = 0
+    similarity = None
+
+    for i in range(repeat):
+        start = time.perf_counter()
+        similarity = cos_sim.get_cosine_similarity(vector_a, vector_b)
+        end = time.perf_counter()
+        avg_runtime += (end-start)
+
+    avg_runtime = (avg_runtime / repeat)
+
+    sys.stdout.write('{} {}\n'.format(similarity, avg_runtime))
+
+if __name__ == '__main__':
+    main()
