@@ -31,7 +31,7 @@ int vector_from_file(int size, double *vect, char *filename) {
 int main(int argc, char *argv[]) {
 
     int size, repeat, i;
-    double avg_runtime, similarity; //, eucl_t, dot_t;
+    double avg_runtime, similarity;
     char *filename_a, *filename_b;
     struct timespec start, end;
 
@@ -54,13 +54,11 @@ int main(int argc, char *argv[]) {
     }
 
     avg_runtime = 0;
-    //eucl_t = 0;
-    //dot_t = 0;
     double t;
 
     for (i=0; i<repeat; i++) {
         clock_gettime(CLOCK_REALTIME, &start);
-        similarity = get_cosine_similarity(size, vector_a, vector_b); //, &eucl_t, &dot_t);
+        similarity = get_cosine_similarity(size, vector_a, vector_b);
         clock_gettime(CLOCK_REALTIME, &end);
         t = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec)/BILLION);
         avg_runtime += t;
@@ -68,11 +66,7 @@ int main(int argc, char *argv[]) {
     }
 
     avg_runtime /= repeat;
-    //eucl_t /= repeat;
-    //dot_t /= repeat;
 
-    printf("%.20f %.15f\n", similarity, avg_runtime);
-    //printf("e= %.10f [%.2f\%]\n", eucl_t, (100*eucl_t/(eucl_t+dot_t)) );
-    //printf("d= %.10f [%.2f\%]\n", dot_t,  (100*dot_t /(eucl_t+dot_t)) );
+    printf("%.20f %.15f", similarity, avg_runtime);
     return 0;
 }

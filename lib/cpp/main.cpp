@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
     avg_runtime /= repeat;
 
-    printf("%.20f %.10f\n", similarity, avg_runtime);
+    printf("%.20f %.15f", similarity, avg_runtime);
 
     return 0;
 }

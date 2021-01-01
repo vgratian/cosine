@@ -60,5 +60,5 @@ func main() {
 	
 	avg_time = avg_time / float64(repeat)
 
-	fmt.Printf("%.20f %.10f\n", similarity, avg_time)
+	fmt.Printf("%.20f %.15f", similarity, avg_time)
 }

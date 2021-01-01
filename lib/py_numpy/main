@@ -29,7 +29,7 @@ def main():
 
     avg_runtime /= repeat
     
-    sys.stdout.write('{} {}\n'.format(similarity, avg_runtime))
+    sys.stdout.write('{} {}'.format(similarity, avg_runtime))
 
 
 if __name__ == '__main__':
