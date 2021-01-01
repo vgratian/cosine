@@ -1,19 +1,17 @@
 MODULE main;
-IMPORT Args, Texts, Oberon, Platform, CosineS, Vector;
+IMPORT Args, Out, Cout, Platform, CosineS, Vector;
 VAR
-    error, i: INTEGER;
+    i: INTEGER;
     size, repeat, secStart, usecStart, secEnd, usecEnd: LONGINT;
     t, runtime: LONGREAL;
     fn1, fn2: ARRAY 50 OF CHAR;
     vect1, vect2: Vector.Vector;
     value: LONGREAL;
-    w: Texts.Writer;
 
 BEGIN
-    Texts.OpenWriter(w);
 
     IF Args.argc # 5 THEN
-        Texts.WriteString(w, "Expected 4 args: repeat size file1 file2"); Texts.WriteLn(w);
+        Out.String("Expected 4 args: repeat size file1 file2"); Out.Ln;
         HALT(1);
     END;
 
@@ -26,11 +24,11 @@ BEGIN
     Vector.Init(size, vect2);
 
     IF Vector.FromFile(fn1, size, vect1) # 0 THEN
-        Texts.WriteString(w,"Error read "); Texts.WriteString(w,fn1); Texts.WriteLn(w);
+        Out.String("Error read "); Out.String(fn1); Out.Ln;
         HALT(1);
     END;
     IF Vector.FromFile(fn2, size, vect2) # 0 THEN;
-        Texts.WriteString(w,"Error read "); Texts.WriteString(w,fn2); Texts.WriteLn(w);
+        Out.String("Error read "); Out.String(fn2); Out.Ln;
         HALT(1);
     END;
 
@@ -45,10 +43,6 @@ BEGIN
     END;
 
     runtime := (runtime / repeat);
-    Texts.WriteLongReal(w, value, 20);
-    Texts.WriteString(w," ");
-    Texts.WriteRealFix(w, SHORT(runtime), 0, 15);
-    Texts.WriteLn(w);
-    Texts.Append(Oberon.Log, w.buf);
+    Cout.LongReals(value, runtime);
 
 END main.
