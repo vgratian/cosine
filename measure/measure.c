@@ -26,7 +26,7 @@ void help() {
     " of the command.\n"
     "\n"
     "Resources:\n"
-    " - ttime         Total CPU time used (utime + stime)"
+    " - ttime         Total CPU time used (utime + stime)\n"
     " - utime         User CPU time in seconds (microsecond precision)\n"
     " - stime         System CPU time in seconds (microsecond precision)\n"
     " - maxrss        Maximum Resident Set Size in kilobytes\n"

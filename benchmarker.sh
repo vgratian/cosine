@@ -1,14 +1,15 @@
 #!/bin/bash
 
-project="Cosine Similarity Benchmarker"
+program="Cosine Similarity Benchmarker"
 bin=`basename $0`
-projects_dir="lib"
+lib="lib"
+path=$(pwd)
 
 Help() {
 
     cat <<EOF_PRINT_HELP
 
-    $project - $bin
+    $bin - $program
 
     usage:
 
@@ -18,11 +19,11 @@ Help() {
         -d          Draw a graph (requires matplotlib)
         -s          Save results to "results/"
         -k          Don't remove compiled binaries after tests are done
-        -p          Test only these project(s) (default: all projects in $projects_dir)
+        -p          Test only these project(s) (default: all projects in $lib)
 
     FROM            Start with vectors of this size, if the next two arguments
                     are not provided, then only one test is done
-    TOX             Run tests and end with vectors of this size
+    TO              Run tests and end with vectors of this size
     STEP            Increment size of vectors during each test
 
 EOF_PRINT_HELP
@@ -33,50 +34,65 @@ EOF_PRINT_HELP
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 declare -a projects_raw
-draw_graph=false
-save_result=false
-keep_bins=false
+draw_graphs=false
+save_results=false
+no_cleanup=false
 
-while getopts hdsp: x; do
+while getopts hdskp: x; do
     case "$x" in
         h) Help; exit 0 ;;
         p) projects_raw=($(sed 's/,/ /g' <<< $OPTARG)) ;;
-        d) draw_graph=true ;;
-        s) save_result=true ;;
-        k) keep_bins=true ;;
+        d) draw_graphs=true ;;
+        s) save_results=true ;;
+        k) no_cleanup=true ;;
         ?) exit 1 ;;
     esac
 done
 
-size_min=${@:$OPTIND:1}
-size_max=${@:$OPTIND+1:1}
+from=${@:$OPTIND:1}
+to=${@:$OPTIND+1:1}
 step=${@:$OPTIND+2:1}
+repeat=100
 
-printf "\n"
+if [ "$from" == "" ] || [ "$to" == "" ] || [ "$step" == "" ]; then
+    echo "not enough arguments, aborting"
+    exit 1
+fi
 
+printf "benchmark parameters: FROM=%s TO=%s STEP=%s REPEAT=%s\n" $from $to $step $repeat
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Validate projects in "lib/"
 # compile if needed
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+cd measure
+make
+if [ $? -eq 0 ]; then
+    echo "OK compiled \"measure\""
+else
+    echo "failed to compile make, aborting"
+    exit 1
+fi
+cd ../
+
+
 declare -a projects
 
 if [ ${#projects_raw[@]} -eq 0 ]; then
-    projects=($(ls $projects_dir))
+    projects=($(ls $lib))
     echo "verifying ${#projects[@]} projects..."
 else
     for p in ${projects_raw[@]}; do
-        if [ -d "$projects_dir/$p" ]; then
+        if [ -d "$lib/$p" ]; then
             projects+=($p)
             echo "ok: $p"
         else
-            echo "invalid project: $p; \"$projects_dir/$p\" not found, skipped"
+            echo "invalid project: $p; \"$lib/$p\" not found, skipped"
         fi
     done
     echo "verifying selected ${#projects[@]} projects..."
 fi
-
 
 if [ ${#projects[@]} -eq 0 ]; then
     echo "no valid projects defined, aborting"
@@ -85,21 +101,25 @@ fi
 
 declare -a projects_compiled
 declare -a projects_ok
-declare -a results
 
-results[0]="N "
+# arrays to keep performance results
+declare -a avg_walltime
+declare -a total_cputime
+declare -a max_rss
+
+avg_walltime[0]="N"
 
 for project in ${projects[@]}; do
-    if [ -f "$projects_dir/$project/Makefile" ]; then
+    if [ -f "$lib/$project/Makefile" ]; then
         printf " %s: compiling... " $project
-        cd "$projects_dir/$project"
+        cd "$lib/$project"
         make
         if [ $? -eq 0 ]; then
             if [ -f "main" ]; then
                 printf "OK\n"
                 projects_compiled+=($project)
                 projects_ok+=($project)
-                results[0]="${results[0]} $project"
+                avg_walltime[0]+=",$project"
             else
                 echo "OK but executable \"main\" not found, SKIP"
             fi
@@ -108,16 +128,18 @@ for project in ${projects[@]}; do
         fi
         cd "../../"
     else
-        if [ -f "$projects_dir/$project/main" ]; then
+        if [ -f "$lib/$project/main" ]; then
             echo " $project: executable \"main\" found OK"
             projects_ok+=($project)
-            results[0]="${results[0]} $project"
+            avg_walltime[0]+=",$project"
         else
             echo " $project: Makefile or \"main\" not present, SKIP"
         fi
     fi
 done
 
+total_cputime[0]="${avg_walltime[0]}"
+max_rss[0]="${avg_walltime[0]}"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run the benchmark
@@ -128,40 +150,51 @@ printf "\n\n"
 
 declare -a output
 i=1
-repeat=10
-for ((; $size_min <= $size_max; size_min+=$step)); do
+for ((; $from <= $to; from+=$step)); do
 
-    results[i]="$size_min"
+    avg_walltime[i]="$from"
+    total_cputime[i]="$from"
+    max_rss[i]="$from"
 
-    echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    printf "N=%7s R=%7s\n" $size_min $repeat
+    printf "\nn = %s\n" $from
+    printf "++++++++++++++++++++      +++++++++++++++++++++++++++++  +++++++++++++++++++++++++++++  "
+    printf "+++++++++++++++++++  +++++++++++++++++++  ++++++++++++++  +++++++++++++++\n"
+    printf "%20s      %-30s %-30s " "PROJECT" "RESULT" "AVG WALLTIME PER CALC"
+    printf "%-20s %-20s %-15s %15s\n" "CPU TIME" "CPUTIME USER" "CPUTIME SYS" "MAX RSS (KB)"
+    printf "++++++++++++++++++++      +++++++++++++++++++++++++++++  +++++++++++++++++++++++++++++  "
+    printf "+++++++++++++++++++  +++++++++++++++++++  ++++++++++++++  +++++++++++++++\n"
 
-    printf "%30s %30s %30s %30s\n" "PROJECT" "RESULT" "AVG TIME" "ELAPSED TIME"
-
-    echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
-    ./rand_vector.py $size_min > v1
-    ./rand_vector.py $size_min > v2
+    ./util/rand_vector.py $from > v1
+    ./util/rand_vector.py $from > v2
 
     for project in ${projects[@]}; do
         
-        printf "%30s " $project
+        printf "%20s      " $project
 
-        cd "$projects_dir/$project"
+        cd "$lib/$project"
         
-        start=$(date +%s.%N)
-        output=($(./main 10 $size_min ../../v1 ../../v2))
-        end=$(date +%s.%N)
+        output=($(../../measure/measure ./main $repeat $from ../../v1 ../../v2))
+
+        if [ ! $? -eq 0 ]; then
+            echo "something went wrong, ABORTING."
+            cd ../../
+            save_results=false
+            draw_graphs=false
+            break
+        fi
 
         similarity=${output[0]}
-        avg_time=${output[1]}
-        elapsed_time="$(bc <<< "$end-$start")"
+        wall_time=${output[1]}
+        cpu_total=${output[2]}
+        cpu_user=${output[3]}
+        cpu_sys=${output[4]}
+        rss=${output[5]}
 
-        printf "%30s %30s %30s\n" $similarity $avg_time $elapsed_time
-
-        #echo "start=$start end=$end similarity=$similarity avg_time=$avg_time"
+        printf "%-30s %-30s %-20s %-20s %-15s %15s\n" $similarity $wall_time $cpu_total $cpu_user $cpu_sys $rss
     
-        results[i]+=" $avg_time"
+        avg_walltime[i]+=",$wall_time"
+        total_cputime[i]+=",$cpu_total"
+        max_rss[i]+=",$rss"
 
         cd ../../
     done
@@ -173,22 +206,51 @@ done
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 printf "\n\n"
-output_prefix=$(date +%N);
-echo "writing results to file [$output_prefix.txt]"
-printf "%s\n" "${results[@]}" > $output_prefix.txt
 
-echo "drawing graph... [$output_prefix.png]"
-./draw_graph.py $output_prefix.txt $output_prefix
+if [ $save_results == true ]; then
+
+    echo "saving results..."
+    
+    output_prefix=$(date +%N);
+
+    filepath=$(printf "%s_avg_walltime.csv" "$output_prefix")
+    printf "%s\n" "${avg_walltime[@]}" > "$filepath"
+    echo " saved avg_walltime to [$filepath]"
+
+    filepath=$(printf "%s_total_cputime.csv" "$output_prefix")
+    printf "%s\n" "${total_cputime[@]}" > "$filepath"
+    echo " saved total_cputime to [$filepath]"
+
+    filepath=$(printf "%s_max_rss.csv" "$output_prefix")
+    printf "%s\n" "${max_rss[@]}" > "$filepath"
+    echo " saved max_rss to [$filepath]"
+
+else
+    echo "results not saved"
+fi
+
+#echo "drawing graph... [$output_prefix.png]"
+#./draw_graph.py $output_prefix.txt $output_prefix
 
 printf "\n\n"
-printf "cleaning up... "
+printf "cleaning up... \n"
 
-cd "$projects_dir"
-for project in ${projects_compiled[@]}; do
-    cd "$project"
+rm v1 v2
+
+if [ $no_cleanup == true ]; then
+    echo "kept project binaries"
+else
+    cd measure
     make clean
+    cd ../$lib
+    for project in ${projects_compiled[@]}; do
+        cd "$project"
+        make clean
+        cd ../
+    done
     cd ../
-done
-cd ../
+    echo "cleaned up project binaries"
+fi
 
-printf "Done\n"
+echo "DONE"
+
