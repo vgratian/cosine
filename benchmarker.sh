@@ -113,7 +113,7 @@ for project in ${projects[@]}; do
     if [ -f "$lib/$project/Makefile" ]; then
         printf " %s: compiling... " $project
         cd "$lib/$project"
-        make
+        make > /dev/null 2>&1
         if [ $? -eq 0 ]; then
             if [ -f "main" ]; then
                 printf "OK\n"
@@ -215,22 +215,34 @@ if [ $save_results == true ]; then
 
     filepath=$(printf "%s_avg_walltime.csv" "$output_prefix")
     printf "%s\n" "${avg_walltime[@]}" > "$filepath"
-    echo " saved avg_walltime to [$filepath]"
+    printf " saved avg_walltime to [%s]" $filepath
+    if [ $draw_graphs == true ]; then
+        ./util/draw_graph.py $filepath "Avg_WallTime"
+        printf ", saved graph"
+    fi
+    printf "\n"
 
     filepath=$(printf "%s_total_cputime.csv" "$output_prefix")
     printf "%s\n" "${total_cputime[@]}" > "$filepath"
-    echo " saved total_cputime to [$filepath]"
+    printf " saved total_cputime to [%s]" $filepath
+    if [ $draw_graphs == true ]; then
+        ./util/draw_graph.py $filepath "CPUtime"
+        printf ", saved graph"
+    fi
+    printf "\n"
 
     filepath=$(printf "%s_max_rss.csv" "$output_prefix")
     printf "%s\n" "${max_rss[@]}" > "$filepath"
-    echo " saved max_rss to [$filepath]"
+    printf " saved max_rss to [%s]" $filepath
+    if [ $draw_graphs == true ]; then
+        ./util/draw_graph.py $filepath "maxRSS"
+        printf ", saved graph"
+    fi
+    printf "\n"
 
 else
     echo "results not saved"
 fi
-
-#echo "drawing graph... [$output_prefix.png]"
-#./draw_graph.py $output_prefix.txt $output_prefix
 
 printf "\n\n"
 printf "cleaning up... \n"
