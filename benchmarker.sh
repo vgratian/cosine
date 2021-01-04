@@ -13,18 +13,19 @@ Help() {
 
     usage:
 
-      $./$bin [options] [-p PROJECT_1,PROJECT_2,...,PROJECT_N] FROM TO STEP
+      $./$bin [options] [-l PROJECT_1,PROJECT_2,...,PROJECT_N] FROM TO STEP REPEAT
 
     options:
-        -d          Draw a graph (requires matplotlib)
-        -s          Save results to "results/"
+        -s          Save results as .tsv files
+        -p          Draw a graph (requires gnuplot)
         -k          Don't remove compiled binaries after tests are done
-        -p          Test only these project(s) (default: all projects in $lib)
+        -l          Test only these package(s) (default: all in $lib)
+        -h          Print this message 
 
-    FROM            Start with vectors of this size, if the next two arguments
-                    are not provided, then only one test is done
-    TO              Run tests and end with vectors of this size
-    STEP            Increment size of vectors during each test
+    FROM            Initial size of vectors
+    TO              Final size of vectors
+    STEP            Increment size of vectors after each iteration
+    REPEAT          Repeat calculation during each iteration
 
 EOF_PRINT_HELP
 }
@@ -34,17 +35,17 @@ EOF_PRINT_HELP
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 declare -a projects_raw
-draw_graphs=false
-save_results=false
-no_cleanup=false
+plot=false
+save=false
+cleanup=true
 
-while getopts hdskp: x; do
+while getopts hpskl: x; do
     case "$x" in
         h) Help; exit 0 ;;
-        p) projects_raw=($(sed 's/,/ /g' <<< $OPTARG)) ;;
-        d) draw_graphs=true ;;
-        s) save_results=true ;;
-        k) no_cleanup=true ;;
+        l) projects_raw=($(sed 's/,/ /g' <<< $OPTARG)) ;;
+        p) plot=true ;;
+        s) save=true ;;
+        k) cleanup=false ;;
         ?) exit 1 ;;
     esac
 done
@@ -52,36 +53,40 @@ done
 from=${@:$OPTIND:1}
 to=${@:$OPTIND+1:1}
 step=${@:$OPTIND+2:1}
-repeat=100
+repeat=${@:$OPTIND+3:1}
 
-if [ "$from" == "" ] || [ "$to" == "" ] || [ "$step" == "" ]; then
+if [ "$from" == "" ] || [ "$to" == "" ] || [ "$step" == "" ] || ["$repeat" == ""]; then
     echo "not enough arguments, aborting"
     exit 1
 fi
 
-printf "benchmark parameters: FROM=%s TO=%s STEP=%s REPEAT=%s\n" $from $to $step $repeat
+benchmark=$(date +%N);
+printf "Starting Benchmark #$benchmark\n"
+printf "with parameters: FROM=%s TO=%s STEP=%s REPEAT=%s\n" $from $to $step $repeat
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Validate projects in "lib/"
-# compile if needed
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Compile utils
 
-cd measure
+cd util
+printf "Compiling utils..."
 make
 if [ $? -eq 0 ]; then
-    echo "OK compiled \"measure\""
+    echo " OK"
 else
-    echo "failed to compile make, aborting"
+    echo "FAIL, aborting"
+    cd ../
     exit 1
 fi
 cd ../
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Check if projects exist in "lib/"
 
 declare -a projects
 
 if [ ${#projects_raw[@]} -eq 0 ]; then
     projects=($(ls $lib))
-    echo "verifying ${#projects[@]} projects..."
+    echo "Verifying ${#projects[@]} projects..."
 else
     for p in ${projects_raw[@]}; do
         if [ -d "$lib/$p" ]; then
@@ -102,13 +107,19 @@ fi
 declare -a projects_compiled
 declare -a projects_ok
 
-# arrays to keep performance results
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# arrays to store performance results
+
 declare -a avg_walltime
 declare -a total_cputime
 declare -a max_rss
 
 avg_walltime[0]="N"
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Validate/compile selected projects
+
+declare -a projects
 for project in ${projects[@]}; do
     if [ -f "$lib/$project/Makefile" ]; then
         printf " %s: compiling... " $project
@@ -144,7 +155,6 @@ max_rss[0]="${avg_walltime[0]}"
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run the benchmark
 # Show results on the screen
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 printf "\n\n"
 
@@ -164,8 +174,8 @@ for ((; $from <= $to; from+=$step)); do
     printf "++++++++++++++++++++      +++++++++++++++++++++++++++++  +++++++++++++++++++++++++++++  "
     printf "+++++++++++++++++++  +++++++++++++++++++  ++++++++++++++  +++++++++++++++\n"
 
-    ./util/rand_vector.py $from > v1
-    ./util/rand_vector.py $from > v2
+    ./util/randvect.py $from -10 10 > v1
+    ./util/randvect.py $from -10 10 > v2
 
     for project in ${projects[@]}; do
         
@@ -173,7 +183,7 @@ for ((; $from <= $to; from+=$step)); do
 
         cd "$lib/$project"
         
-        output=($(../../measure/measure ./main $repeat $from ../../v1 ../../v2))
+        output=($(../../util/measure ./main $repeat $from ../../v1 ../../v2))
 
         if [ ! $? -eq 0 ]; then
             echo "something went wrong, ABORTING."
@@ -202,57 +212,49 @@ for ((; $from <= $to; from+=$step)); do
 done
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Safe results to text file and graph
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Safe results to '.csv' files
 
 printf "\n\n"
 
-if [ $save_results == true ]; then
+if [ $save == true ]; then
+
+    if [ ! -d "results" ]; then
+        mkdir results
+    fi
 
     echo "saving results..."
     
-    output_prefix=$(date +%N);
+    filepath1=$(printf "results/%s_avg_walltime.csv" "$benchmark")
+    printf "%s\n" "${avg_walltime[@]}" > "$filepath1"
+    printf " [%s]\n" $filepath1
 
-    filepath=$(printf "%s_avg_walltime.csv" "$output_prefix")
-    printf "%s\n" "${avg_walltime[@]}" > "$filepath"
-    printf " saved avg_walltime to [%s]" $filepath
-    if [ $draw_graphs == true ]; then
-        ./util/draw_graph.py $filepath "Avg_WallTime"
-        printf ", saved graph"
-    fi
-    printf "\n"
+    filepath2=$(printf "results/%s_total_cputime.csv" "$benchmark")
+    printf "%s\n" "${total_cputime[@]}" > "$filepath2"
+    printf " [%s]\n" $filepath2
 
-    filepath=$(printf "%s_total_cputime.csv" "$output_prefix")
-    printf "%s\n" "${total_cputime[@]}" > "$filepath"
-    printf " saved total_cputime to [%s]" $filepath
-    if [ $draw_graphs == true ]; then
-        ./util/draw_graph.py $filepath "CPUtime"
-        printf ", saved graph"
-    fi
-    printf "\n"
+    filepath3=$(printf "results/%s_max_rss.csv" "$benchmark")
+    printf "%s\n" "${max_rss[@]}" > "$filepath3"
+    printf " [%s]\n" $filepath3
 
-    filepath=$(printf "%s_max_rss.csv" "$output_prefix")
-    printf "%s\n" "${max_rss[@]}" > "$filepath"
-    printf " saved max_rss to [%s]" $filepath
-    if [ $draw_graphs == true ]; then
-        ./util/draw_graph.py $filepath "maxRSS"
-        printf ", saved graph"
+
+    if [ $plot == true ]; then
+        gnuplot -e "benchmark='$benchmark';file1='$filepath1';file2='$filepath2';file3='$filepath3';myterm='qt'" util/multiplot.gp -persist
+
+        if [ $? != 0 ]; then
+            echo "Failed creating plot, command was:"
+        fi
     fi
-    printf "\n"
 
 else
-    echo "results not saved"
+    echo "Results not saved"
 fi
 
-printf "\n\n"
-printf "cleaning up... \n"
+printf "\n"
 
-rm v1 v2
-
-if [ $no_cleanup == true ]; then
-    echo "kept project binaries"
-else
-    cd measure
+if [ $cleanup == true ]; then
+    printf "cleaning up..."
+    rm v1 v2
+    cd util
     make clean
     cd ../$lib
     for project in ${projects_compiled[@]}; do
@@ -261,7 +263,7 @@ else
         cd ../
     done
     cd ../
-    echo "cleaned up project binaries"
+    echo " DONE"
 fi
 
 echo "DONE"

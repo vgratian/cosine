@@ -6,6 +6,7 @@
 # file2 - file with walltime data
 # file3 - file with maxrss data
 
+set datafile separator ","
 set datafile columnheaders
 
 set terminal myterm size 1280,720

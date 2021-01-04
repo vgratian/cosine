@@ -6,6 +6,7 @@ import numpy as np
 import cos_sim_np
 
 def main():
+
     repeat = int(sys.argv[1])
     size = int(sys.argv[2])
 
@@ -25,10 +26,9 @@ def main():
         similarity = cos_sim_np.get_cosine_similarity(vector_a, vector_b)
         end = time.monotonic()
         avg_runtime += (end - start)
-        #print('{}\t {}'.format(i, (end-start)))
+        #sys.stdout.write('{}\t{}\n'.format(i, (end-start)))
 
     avg_runtime /= repeat
-    
     sys.stdout.write('{} {}'.format(similarity, avg_runtime))
 
 
