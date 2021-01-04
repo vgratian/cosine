@@ -5,7 +5,7 @@ We compare computational performance of different programming languages in calcu
 
 Running `benchmarker.sh` will create a benchmark on your own machine and plot the results (see [Usage](#usage), but check [Requirements](#requirements) first). An example, created on a 8GB/i5 machine:
 
-<center><img src=764556754_plot.svg></center>
+<center><img src=example_plot.svg></center>
 
 X-axis represents the vector size. For the y-axis, three metrics are used:
 
