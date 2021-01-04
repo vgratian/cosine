@@ -1,86 +1,99 @@
 
-# Cosine Similarity: Python, Perl and C++ library
+# Cosine Benchmark v2
 
-# About
+We compare computational performance of different programming languages in calculating cosine similarity of random vectors. Current version includes [packages](#packages) in __C__, __C++__, __Go__, __Oberon2__, __Perl__ and a number of optimized versions in __Python3__. 
 
-Cosine Similarity is a measure of similarity between two vectors. This package, with functions performing same task in __Python__, __C++__ and __Perl__, is only meant foreducational purposes and I mainly focus here on optimizing Python.
+Running `benchmarker.sh` will create a benchmark on your own machine and plot the results (see [Usage](#usage), but check [Requirements](#requirements) first). An example, created on a 8GB/i5 machine:
 
-The comparison is mainly between the two modules: `cos_sim.py` (poor performance, but better readability) and `cos_sim_np.py` which achieves close to C++ performance using NumPy arrays. The average runtime difference between the two Python scripts is about 1:250.
+<center><img src=764556754_plot.svg></center>
+
+X-axis represents the vector size. For the y-axis, three metrics are used:
+
+- `total_cputime` (user+system) : CPU seconds by the package to fulfill the task, measured externally, but includes time spent to read vectors from files and float conversions.
+- `avg_walltime` (per calculation) : Human seconds spent on calculation only, measured by the package iteself, less reliable in reflecting actual resource usage.
+- `max_rss` (kilobytes) : measured externally, max memory used by the package. 
+
+As one can see, there is a considerable disparity between performance in all three metrics. 
 
 
-### About Cosine Similarity
-This measure is widely used in document classification and information retrieval where documents are treated as vectors. For example we would like to
-find the document that has the highest similarity to the search query. We can get vectors by calculating a score for each word in the dataset (frequency or TF-IDF). With cosine similarity we are then able to measure the similarity between each pair of vectors.
+## Cosine Similarity
+Cosine similarity is a measure of similarity between two vectors. It is widely used in machine learning where documents, words or images are treated as vectors.
 
-This similarity is calculated by measuring the distance between two vectors and normalizing that by the length of the vectors (so the length of the documents don't play a role: a short document can be very similar to a long one and vice versa).
+This similarity is calculated by measuring the distance between two vectors and normalizing that by the length of the vectors:
+<center><img src="cosine_similarity.svg" width="50%"></center>
+
+# Requirements
+The only requirement to run the Benchmarker is GCC (or any other C compiler). Optionally [gnuplot](http://www.gnuplot.info/) is used for plotting the results.
+
+Each individual package in [lib/](lib) might have its own requirements (see under [Packages](#packages)). However, incompatible packages are skipped at runtime, so you are safe to run the Benchmarker even when not all package requirements are met.
 
 # Usage
-### Input
-Expected input is two vectors of equal length.
 
-In the test files, we just randomly generate two vectors, therefore the "similarity" between them is also random.
+Run `benchmarker.sh` with 4 positional arguments, which are repsectively:
+- `min` : initial size of vectors
+- `max` : final size of vectors 
+- `step` : increase size of vectors during each iteration
+- `repeat` : ask packages to repeat calculation each time (to increase statistical significance of results)
 
-### Output
+Use `-s` and `-p` to save results as `.tsv` files and draw plots reslectively. Use `--libs <lib1,lib2...>` to run the benchmarker on a subset of packages. Run `./benchmarker.sh --help` for more details.
+
+### Examples
+```bash
+$ ./benchmarker.sh -sp 10000 30000 10000 100
+```
+
+Will run 3 iterations, with random vectors of size 10,000 20,000 and 30,000. Each calculation will be repeated 100 times. Results will be saved and plotted.
+
+```bash
+$ ./benchmarker.sh -sp --libs c,go,py_numpy 10000 30000 10000 100
+```
+
+Same, but will run the benchmark only on packages [c](lib/c), [go](lib/go) and [py_numpy](lib/py_numpy).
+
+
+# Packages
+
+| package               | description	         | requirement         | where to get from      |
+|-----------------------|------------------------|---------------------|------------------------|
+| [c](lib/c)            | C                      | `gcc` or any other c compiler |              | 
+| [c++](lib/cpp)        | C++                    | `g++` (C++ frontend of gcc)   |              |
+| [go](lib/go)          | Go                     | `go`   | [golang.org](https://golang.org/doc/install) |
+| [oberon_voc](lib/oberon_voc) | [Oberon-2](https://en.wikipedia.org/wiki/Oberon-2) | `voc` | [Vishap Oberon Compiler](https://github.com/vishaps/voc) |
+| [perl](lib/perl)      | vanilla Perl           | `perl`                    |                        | 
+| [py](lib/py)          | vanilla Python         | `python3`           |                        |
+| [py_compr](lib/py_compr) | uses list comprehension |                 |                        |
+| [py_array](lib/py_array) | uses [python arrays](https://docs.python.org/3/library/array.html) | | |
+| [py_numpy](lib/py_compr) | uses NumPy | python3 lib `numpy`  | `pip3 install numpy` or [numpy.org](https://numpy.org/) |
+| [py_sklearn](lib/py_compr) | uses NumPy+Sklearn | python3 lib `skearn`  | `pip3 install sklearn` or [scikit-learn.org](https://scikit-learn.org/) |
+
 
 Output is a number between -1 and 1, where 1 means the two vectors are completely similar (or identical), 0 means they have no similarity at all and -1
 means they are opposites of each other.
 
-# Computational performance
+# Contributing
 
-For testing, 2 vectors of size 50,000 are generated which point at opposite directions (so the calculated cosine similarity should be -1). We calculate cosine similarity, repeat this 50 times in total and calculate average runtime. The following test were done on a 8GB/i5 machine.
+You are more than welcome to suggest improvements for the existing packages or add a new package in your own preferred language.
 
-Note that although Python is the slowest initially, it beats C++ and Perl when we use NumPy arrays instead of built-in lists. (Also note that my knowledge of C++ is very superficial, I'm sure there are ways make it run much faster.)
+A new package should be a subdirectory in [lib/](lib/). If your language is interpretted, then it should contain an executable file `main` (i.e. a script with a shebang). If it's compiled, then it should contain a Makefile that compiles a binary `main`.
 
+`main` should accept 4 CLI arguments, which are respectively:
+- repeat (int) : how many times to repeat the calculation
+- size (int) : size of the input vectors
+- filepath1 (string) : file with the first vector (line-seperated double-precision floats)
+- filepath1 (string) : file with the second vector 
 
-__C++__:
-```
-$ make cos_sim_test && ./cos_sim_test
-Done. Average runtime: 0.00284s. Similarity: -1.
-```
-
-__Perl__:
-```
-$ perl cos_sim_test.pl
-Done. Average runtime : 0.0306 s. Similarity: -1.
-```
-
-__Python__:
-```
-$ python cos_sim_test.py
-Done. Average runtime: 0.0491 s. Similarity: -1.0.
-```
-
-# Python optimization
-
-First step to optimize Python is to use list comprehensions instead of `for` loops. See the comments in `get_dot_prod()` and `get_eucl_magn()` in `cos_sim.py` to see how this is done. The difference is however not significant:
-
-```
-$ python cos_sim_test.py
-Done. Average runtime: 0.0437 s. Similarity: -1.0.
-```
-(Here I use the lines commented in `cos_sim.py`)
+`main` should calculate cosine similarity of the two vectors `repeat` times and write to stdout two values (seperated by space):
+- cosine similarity score (double-precision float)
+- average calculation time (double-precision float), this should be monotonic time (wall time)
 
 
-Using only standard/builtin data structures, I tried a few other optimizations (`map` with `lambda` instead of list comprehension), function call instead of object), but none improved the running time. This is strange, I would expect that at least a function call should be less expensive than creating an object.
+# Why you should not trust this benchmark
+This project is meant for educational purposes. You should not use it to make a final decision about what language to use for your project (although it might help you to make an *educated* guess). Why?
 
-Next step was to use external libraries: using NumPy's `ndarray` (N dimensional array) instead of Python lists is here the game changer. Running the same test as above is almost 250x faster than the initial Python test and 14x faster than C++:
+- I have a very superficial knowledge of some of the languages here, so the benchmark might not reflect their best performance
+- Running this benchmark on different machines will likely yield different results
+- You should always create a benchmark for your own specific task (and maybe hardware). Here's an example: for a job project (with heavy vector-calculations) I had to choose between Python arrays and Python with numpy. I knew numpy should be much faster, but it turned out that the overhead was more than the benefit, and in fact it made my project slower.
 
-```
-$ python cos_sim_np_test.py
-Done. Average runtime: 0.0002 s. Similarity: -1.0.
-```
+# Notes on v1
 
-It could not be better than this, I thought, but I went on with experiments. This time I used two methods from `sklearn` to calculate dot product (`sklearn.utils.extmath.safe_sparse_dot`) and euclidean distance (`sklearn.metrics.pairwise.euclidean_distances`) respectively. We continue to use NumPy arrays to store the vectors. The result significantly slower than the last experiment:
-
-
-```
-$ python cos_sim_sk_test.py
-Done. Average runtime: 0.0025 s. Similarity: -1.0.
-```
-
-So what if we delegate the calculation completely to `sklearn`? My last experiment was to use `sklearn.metrics.pairwise.cosine_similarity` as a method (see my comments in `cos_sim_sk_test.py` for how it is done). Slightly better but still 10x slower than simply using NumPy arrays _and_ a not-so-accurate result.
-
-```
-$ python cos_sim_np_test.py
-Done. Average runtime: 0.0021 s. Similarity: -1.0000000000000024.
-```
+First version of this project included a number of flaws. For example, it used two statically generated vectors of 10s and -10s respectively (so the cosine similarity was always -1). This would poorly reflect the computational performance of the packages, it also did not relfect real-world applications of cosine similarity (which is almost always calculated between vectors of real numbers).
