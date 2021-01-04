@@ -1,7 +1,7 @@
 
 # Cosine Benchmark v2
 
-We compare computational performance of different programming languages in calculating cosine similarity of random vectors. Current version includes [packages](#packages) in __C__, __C++__, __Go__, __Oberon2__, __Perl__ and a number of optimized versions in __Python3__. 
+This framework compares computational performance of programming languages in calculating cosine similarity of random vectors. Current version includes [packages](#packages) in __C__, __C++__, __Go__, __Oberon2__, __Perl__ and a number of optimizations in __Python3__. 
 
 Running `benchmarker.sh` will create a benchmark on your own machine and plot the results (see [Usage](#usage), but check [Requirements](#requirements) first). An example, created on a 8GB/i5 machine:
 
@@ -9,9 +9,9 @@ Running `benchmarker.sh` will create a benchmark on your own machine and plot th
 
 X-axis represents the vector size. For the y-axis, three metrics are used:
 
-- `total_cputime` (user+system) : CPU seconds by the package to fulfill the task, measured externally, but includes time spent to read vectors from files and float conversions.
-- `avg_walltime` (per calculation) : Human seconds spent on calculation only, measured by the package iteself, less reliable in reflecting actual resource usage.
-- `max_rss` (kilobytes) : measured externally, max memory used by the package. 
+- `total_cputime` (user+system) : CPU seconds spent by the package to fulfill the task, measured externally, but includes time spent to read vectors from files and float conversion.
+- `avg_walltime` (per calculation) : Human-experienced seconds spent on eachh calculation, measured by the package iteself, less reliable in reflecting actual resource usage.
+- `max_rss` (kilobytes) : max memory used by the package, measured externally. 
 
 As one can see, there is a considerable disparity between performance in all three metrics. 
 
@@ -19,36 +19,36 @@ As one can see, there is a considerable disparity between performance in all thr
 ## Cosine Similarity
 Cosine similarity is a measure of similarity between two vectors. It is widely used in machine learning where documents, words or images are treated as vectors.
 
-This similarity is calculated by measuring the distance between two vectors and normalizing that by the length of the vectors:
+The similarity value is calculated by measuring the distance between two vectors and normalizing it by the length of the vectors:
 <center><img src="cosine_similarity.svg" width="50%"></center>
 
 # Requirements
-The only requirement to run the Benchmarker is GCC (or any other C compiler). Optionally [gnuplot](http://www.gnuplot.info/) is used for plotting the results.
+The only requirement to run the Benchmarker is GCC (or other C compiler). Optionally [gnuplot](http://www.gnuplot.info/) is used for plotting the results.
 
-Each individual package in [lib/](lib) might have its own requirements (see under [Packages](#packages)). However, incompatible packages are skipped at runtime, so you are safe to run the Benchmarker even when not all package requirements are met.
+Each individual package in [lib/](lib) might have its own requirements (see under [Packages](#packages)). You don't need to meet all package requirements, you can run the benchmark only on selected packages.
 
 # Usage
 
 Run `benchmarker.sh` with 4 positional arguments, which are repsectively:
 - `min` : initial size of vectors
 - `max` : final size of vectors 
-- `step` : increase size of vectors during each iteration
-- `repeat` : ask packages to repeat calculation each time (to increase statistical significance of results)
+- `step` : increase size of vectors after each iteration
+- `repeat` : ask packages to repeat calculation each time (to increase statistical significance)
 
-Use `-s` and `-p` to save results as `.tsv` files and draw plots reslectively. Use `--libs <lib1,lib2...>` to run the benchmarker on a subset of packages. Run `./benchmarker.sh --help` for more details.
+Use `-s` and `-p` to save results as `.csv` files and draw plots reslectively. Use `--libs <lib1,lib2...>` to run the benchmarker on a subset of packages. Run `./benchmarker.sh --help` for more details.
 
 ### Examples
 ```bash
 $ ./benchmarker.sh -sp 10000 30000 10000 100
 ```
 
-Will run 3 iterations, with random vectors of size 10,000 20,000 and 30,000. Each calculation will be repeated 100 times. Results will be saved and plotted.
+Will run 3 iterations, with random vectors of size 10,000, 20,000 and 30,000. Each calculation will be repeated 100 times. Results will be saved and plotted.
 
 ```bash
 $ ./benchmarker.sh -sp --libs c,go,py_numpy 10000 30000 10000 100
 ```
 
-Same, but will run the benchmark only on packages [c](lib/c), [go](lib/go) and [py_numpy](lib/py_numpy).
+Same, but on the packages [c](lib/c), [go](lib/go) and [py_numpy](lib/py_numpy).
 
 
 # Packages
@@ -67,9 +67,6 @@ Same, but will run the benchmark only on packages [c](lib/c), [go](lib/go) and [
 | [py_sklearn](lib/py_compr) | uses NumPy+Sklearn | python3 lib `skearn`  | `pip3 install sklearn` or [scikit-learn.org](https://scikit-learn.org/) |
 
 
-Output is a number between -1 and 1, where 1 means the two vectors are completely similar (or identical), 0 means they have no similarity at all and -1
-means they are opposites of each other.
-
 # Contributing
 
 You are more than welcome to suggest improvements for the existing packages or add a new package in your own preferred language.
@@ -86,6 +83,16 @@ A new package should be a subdirectory in [lib/](lib/). If your language is inte
 - cosine similarity score (double-precision float)
 - average calculation time (double-precision float), this should be monotonic time (wall time)
 
+Compile your package if necessary and test it as follows:
+```
+$ ./util/randvect.py 100000 -10 10 > v1
+$ ./util/randvect.py 100000 -10 10 > v2
+$ ./lib/my_package/main 100000 100 v1 v2
+```
+output should be something like this:
+```
+> 0.00262265036644376 0.00015899505716224666
+```
 
 # Why you should not trust this benchmark
 This project is meant for educational purposes. You should not use it to make a final decision about what language to use for your project (although it might help you to make an *educated* guess). Why?
