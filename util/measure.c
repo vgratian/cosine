@@ -66,10 +66,6 @@ void show_rusage() {
     printf(" %d\n", r.ru_nivcsw);
 }
 
-void show_rlimits() {
-    struct rlimit r;
-}
-
 int main(int argc, char *argv[]) {
 
     int child_status, i;

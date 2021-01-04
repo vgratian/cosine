@@ -2,9 +2,8 @@
 
 CC = gcc
 
-all: measure.c, randvect.c
+all: 
 	@${CC} measure.c -o measure
-	@${CC} randvect.c -o randvect
 
 clean:
-	@rm -f measure randvect
+	@rm -f measure
