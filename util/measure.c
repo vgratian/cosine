@@ -45,18 +45,19 @@ void help() {
 
 void show_rusage() {
     struct rusage r;
-    double ttime;
+    double total_t, user_t, system_t;
     if (getrusage(RUSAGE_CHILDREN, &r) == -1) {
         perror("getrusage");
         exit(EXIT_FAILURE);
     }
 
-    ttime = (r.ru_utime.tv_sec + r.ru_stime.tv_sec);
-    ttime += ((r.ru_utime.tv_usec + r.ru_stime.tv_usec) / 1000000.0);
+    user_t = r.ru_utime.tv_sec + (r.ru_utime.tv_usec / 1000000.0);
+    system_t = r.ru_stime.tv_sec + (r.ru_stime.tv_usec / 1000000.0);
+    total_t = user_t + system_t;
 
-    printf(" %f", ttime);
-    printf(" %d.%d", r.ru_utime.tv_sec, r.ru_utime.tv_usec);
-    printf(" %d.%d", r.ru_stime.tv_sec, r.ru_stime.tv_usec);
+    printf(" %.6f", total_t);
+    printf(" %.6f", user_t);
+    printf(" %.6f", system_t);
     printf(" %d", r.ru_maxrss);
     printf(" %d", r.ru_minflt);
     printf(" %d", r.ru_majflt);
