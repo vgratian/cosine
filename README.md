@@ -10,7 +10,7 @@ Running `benchmarker.sh` will create a benchmark on your own machine and plot th
 X-axis represents the vector size. For the y-axis, three metrics are used:
 
 - `total_cputime` (user+system) : CPU seconds spent by the package to fulfill the task, measured externally, but includes time spent to read vectors from files and float conversion.
-- `avg_walltime` (per calculation) : Human-experienced seconds spent on eachh calculation, measured by the package iteself, less reliable in reflecting actual resource usage.
+- `avg_walltime` (per calculation) : Human-experienced seconds spent on each calculation, measured by the package iteself, less reliable in reflecting actual resource usage.
 - `max_rss` (kilobytes) : max memory used by the package, measured externally. 
 
 As one can see, there is a considerable disparity between performance in all three metrics. 

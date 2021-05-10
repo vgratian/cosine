@@ -1,32 +1,41 @@
 package main
 
 import (
-	"os"
-	"strconv"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"strconv"
 	"strings"
 	"time"
-	"example.org/cos_sim"
 )
 
-func vector_from_file(size int64, filename string) ([]float64) {
-	
-	var data []byte
-	var values []string
-	var value float64
-	var err error
-	var i int64
-	var vector = make([]float64, size)
+func exitError(msg string, err error) {
+	fmt.Println(msg, err)
+	os.Exit(1)
+}
 
-	data, err = ioutil.ReadFile(filename)
-	if err != nil { panic(err) }
+func vectFromFile(size int64, filename string) []float64 {
 
+	var (
+		data   []byte
+		values []string
+		value  float64
+		vector []float64
+		i      int64
+		err    error
+	)
+
+	if data, err = ioutil.ReadFile(filename); err != nil {
+		exitError("read "+filename, err)
+	}
+
+	vector = make([]float64, size)
 	values = strings.Fields(string(data))
 
-	for i=0; i<size; i+=1 {
-		value, err = strconv.ParseFloat(values[i], 64)
-		if err != nil { panic(err) }
+	for i = 0; i < size; i += 1 {
+		if value, err = strconv.ParseFloat(values[i], 64); err != nil {
+			exitError("ParseFloat "+values[i], err)
+		}
 		vector[i] = value
 	}
 
@@ -34,31 +43,38 @@ func vector_from_file(size int64, filename string) ([]float64) {
 }
 
 func main() {
-	var repeat, size, i int64
-	var similarity, avg_time float64
-	var vector_a, vector_b []float64
-	var start time.Time
-	var elapsed time.Duration
-	var err error
+	var (
+		repeat, size, i int64
+		similarity      float64
+		vectA, vectB    []float64
+		start           time.Time
+		avgTime         time.Duration
+		err             error
+	)
 
-	repeat, err = strconv.ParseInt(os.Args[1], 10, 32)
-	if err != nil { panic(err) }
-	size, err = strconv.ParseInt(os.Args[2], 10, 64)
-	if err != nil { panic(err) }
-
-	vector_a = vector_from_file(size, os.Args[3])
-	vector_b = vector_from_file(size, os.Args[4])
-
-	for i=0; i<repeat; i++ {
-		start = time.Now()
-		similarity, err = cos_sim.GetCosineSimilarity(vector_a, vector_b)
-		if err != nil { panic(err) }
-		elapsed = time.Since(start)
-		if err != nil { panic(err) }
-		avg_time += elapsed.Seconds()
+	if len(os.Args) != 5 {
+		fmt.Println("Usage: <repeat> <size> <vector fp> <vector fp>")
+		os.Exit(1)
 	}
-	
-	avg_time = avg_time / float64(repeat)
 
-	fmt.Printf("%.20f %.15f", similarity, avg_time)
+	if repeat, err = strconv.ParseInt(os.Args[1], 10, 32); err != nil {
+		exitError("ParseInt (repeat) "+os.Args[1], err)
+	}
+
+	if size, err = strconv.ParseInt(os.Args[2], 10, 64); err != nil {
+		exitError("ParseInt (size) "+os.Args[2], err)
+	}
+
+	vectA = vectFromFile(size, os.Args[3])
+	vectB = vectFromFile(size, os.Args[4])
+
+	for i = 0; i < repeat; i++ {
+		start = time.Now()
+		if similarity, err = GetCosineSimilarity(vectA, vectB); err != nil {
+			exitError("GetCosineSimilarity", err)
+		}
+		avgTime += time.Since(start)
+	}
+
+	fmt.Printf("%.20f %.15f", similarity, avgTime.Seconds()/float64(repeat))
 }

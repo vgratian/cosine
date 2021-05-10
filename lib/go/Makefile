@@ -7,7 +7,7 @@
 GOC = go
 
 all: main.go
-	@${GOC} build main.go
+	@${GOC} build -o main
 
 clean:
 	@rm -f main

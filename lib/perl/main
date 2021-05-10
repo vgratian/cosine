@@ -3,14 +3,13 @@
 use strict;
 use Time::HiRes;
 use lib '.'; #Redundant if @INC includes current dir
-use cos_sim;
+use cosine_similarity;
 
 
 sub vector_from_file
 {
   my ($size, $filename) = @_;
   my ($i, @vector);
-  my @vector;
 
   open(FH, '<', $filename) or die $!;
 
@@ -27,6 +26,7 @@ sub vector_from_file
   return @vector;
 }
 
+unless ($#ARGV == 4 ) { die "Usage: <repeat> <size> <vector1 fp> <vector2 fp>"; }
 
 my $repeat = $ARGV[0];
 my $size = $ARGV[1];
@@ -42,7 +42,7 @@ my $similarity;
 
 foreach(0..$repeat-1) {
   my $begin = Time::HiRes::time();
-  $similarity = cos_sim::get_cos_sim($size, \@vector_a, \@vector_b);
+  $similarity = cosine_simimilarity::get_cos_sim($size, \@vector_a, \@vector_b);
   my $end = Time::HiRes::time();
   $avg_runtime += ($end-$begin);
 }

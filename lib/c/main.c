@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "cos_sim.c"
+#include "cosine_similarity.c"
 
 #define BILLION  1000000000.0
 
@@ -34,13 +34,17 @@ int main(int argc, char *argv[]) {
     double avg_runtime, similarity;
     char *filename_a, *filename_b;
     struct timespec start, end;
+    double *vector_a, *vector_b;
 
+    if (argc != 5) {
+        printf("usage: <repeat> <size> <vector1 fp> <vector2 fp>\n");
+        exit(1);
+    }
     repeat = atoi(argv[1]);
     size = atoi(argv[2]);
     filename_a = argv[3];
     filename_b = argv[4];
 
-    double *vector_a, *vector_b;
     vector_a = malloc(size * sizeof(*vector_a));
     vector_b = malloc(size * sizeof(*vector_a));
 
@@ -62,7 +66,6 @@ int main(int argc, char *argv[]) {
         clock_gettime(CLOCK_REALTIME, &end);
         t = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec)/BILLION);
         avg_runtime += t;
-        //printf("%d\t %.10f\n", i, t);
     }
 
     avg_runtime /= repeat;
