@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+use strict;
+use Time::HiRes;
+use lib '.'; #Redundant if @INC includes current dir
+use cosine_similarity;
+
+
+sub vector_from_file
+{
+  my ($size, $filename) = @_;
+  my ($i, @vector);
+
+  open(FH, '<', $filename) or die $!;
+
+  $i = 0;
+  while(<FH>) {
+    push(@vector, $_);
+    $i+=1;
+  }
+
+  close(FH);
+
+  unless($i==$size) { die "mismatch size=$size] and file [$filename]=$i"; }
+
+  return @vector;
+}
+
+unless ($#ARGV == 4 ) { die "Usage: <repeat> <size> <vector1 fp> <vector2 fp>"; }
+
+my $repeat = $ARGV[0];
+my $size = $ARGV[1];
+my (@vector_a, @vector_b);
+
+@vector_a = vector_from_file($size, $ARGV[2]);
+@vector_b = vector_from_file($size, $ARGV[3]);
+
+unless (scalar @vector_a == scalar @vector_b) { die "vectors not of equal size"; }
+
+my $avg_runtime = 0;
+my $similarity;
+
+foreach(0..$repeat-1) {
+  my $begin = Time::HiRes::time();
+  $similarity = cosine_simimilarity::get_cos_sim($size, \@vector_a, \@vector_b);
+  my $end = Time::HiRes::time();
+  $avg_runtime += ($end-$begin);
+}
+$avg_runtime /= $repeat;
+printf "%.20f %.15f", $similarity, $avg_runtime;

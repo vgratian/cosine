@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import sys
+import time
+import numpy as np
+import cos_sim_np
+
+def main():
+
+    repeat = int(sys.argv[1])
+    size = int(sys.argv[2])
+
+    with open(sys.argv[3]) as f:
+        vector_a = np.array([float(x) for x in f.readlines()])
+
+    with open(sys.argv[4]) as f:
+        vector_b = np.array([float(x) for x in f.readlines()])
+
+    assert len(vector_a) == len(vector_b), 'vectors are not of equal size'
+
+    avg_runtime = 0
+    similarity = None
+
+    for i in range(repeat):
+        start = time.monotonic()
+        similarity = cos_sim_np.get_cosine_similarity(vector_a, vector_b)
+        end = time.monotonic()
+        avg_runtime += (end - start)
+        #sys.stdout.write('{}\t{}\n'.format(i, (end-start)))
+
+    avg_runtime /= repeat
+    sys.stdout.write('{} {}'.format(similarity, avg_runtime))
+
+
+if __name__ == '__main__':
+    main()

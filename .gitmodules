@@ -1,0 +1,6 @@
+[submodule "randvect"]
+	path = randvect
+	url = git@github.com:vgratian/randvect.git
+[submodule "measure"]
+	path = measure
+	url = git@github.com:vgratian/measure.git
