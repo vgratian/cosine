@@ -5,7 +5,6 @@ use Math::Vector::Real; # Math::Vector::Real::XS
 
 sub get_cos_sim {
     my ($size, $a, $b) = @_;
-    my $n = $size-1;
 
     my $va = V(@$a);
     my $vb = V(@$b);
@@ -13,7 +12,7 @@ sub get_cos_sim {
     my $a_len = abs($va);
     my $b_len = abs($vb);
 
-    my $eucl_magn = sqrt($a_len * $b_len);
+    my $eucl_magn = $a_len * $b_len;
 
     # If 0, stop calculation
     if ($eucl_magn == 0) {
